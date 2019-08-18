@@ -134,6 +134,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Algorithms.h" />
+    <ClInclude Include="src\LinearList.h" />
+    <ClInclude Include="src\Test.h" />
     <ClInclude Include="src\Timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
