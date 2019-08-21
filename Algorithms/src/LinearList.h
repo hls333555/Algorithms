@@ -153,12 +153,12 @@ namespace HAlgorithm {
 			throw std::invalid_argument(ss.str());
 		}
 
-		// Double the capacity
+		// 加倍容量
 		if (m_ListSize == m_ArraySize)
 		{
 			T* temp = new T[m_ArraySize * 2];
 			std::copy(m_Element, m_Element + m_ArraySize, temp);
-			// Release the old array
+			// 删除旧数组
 			delete[] m_Element;
 			m_Element = temp;
 			m_ArraySize *= 2;
@@ -174,16 +174,16 @@ namespace HAlgorithm {
 	{
 		CheckIndex(index);
 		std::copy(m_Element + index + 1, m_Element + m_ListSize, m_Element + index);
-		// Call the destructor
+		// 手动调用析构函数
 		m_Element[--m_ListSize].~T();
 
-		// Shrink the capacity
+		// 缩小容量
 		if (m_ListSize < m_ArraySize / 4)
 		{
 			int newSize = std::max(m_InitialCapacity, m_ArraySize / 2);
 			T* temp = new T[newSize];
 			std::copy(m_Element, m_Element + newSize, temp);
-			// Release the old array
+			// 删除旧数组
 			delete[] m_Element;
 			m_Element = temp;
 			m_ArraySize = newSize;
@@ -324,6 +324,474 @@ namespace HAlgorithm {
 	{
 		x.Output(out);
 		return out;
+	}
+
+	template <typename T>
+	struct ChainNode
+	{
+		T element;
+		ChainNode<T>* next;
+
+		ChainNode() {}
+		ChainNode(const T& _element, ChainNode<T>* _next = nullptr)
+			: element(_element), next(_next) {}
+	};
+
+	template <typename T>
+	class Chain : public LinearList<T>
+	{
+		class Iterator
+		{
+			typedef struct forward_iterator_type iterator_category;
+			typedef T value_type;
+			typedef ptrdiff_t difference_type;
+			typedef T* pointer;
+			typedef T& reference;
+
+			Iterator(const ChainNode<T>& node = nullptr)
+				: m_Node(node) {}
+
+			T& operator*() { return m_Node->element; }
+			T* operator->() { return &m_Node->element; }
+
+			Iterator& operator++()
+			{
+				m_Node = m_Node->next;
+				return *this;
+			}
+			Iterator operator++(int)
+			{
+				Iterator temp = *this;
+				m_Node = m_Node->next;
+				return temp;
+			}
+
+			bool operator==(const Iterator& other) { return m_Node == other.m_Node; }
+			bool operator!=(const Iterator& other) { return m_Node != other.m_Node; }
+
+		private:
+			ChainNode<T>* m_Node;
+		};
+
+	public:
+		Chain();
+		Chain(const Chain<T>& other);
+		~Chain();
+
+		virtual bool Empty() const override { return m_ListSize == 0; }
+		virtual int Size() const override { return m_ListSize; }
+		virtual T& Get(int index) const override;
+		virtual int Find(const T& element) const override;
+		virtual void Insert(int index, const T& element) override;
+		virtual void Erase(int index) override;
+		virtual void Output(std::ostream& out) const override;
+
+		bool IsValidIndex(int index) const { return index >= 0 && index < m_ListSize; }
+
+		Iterator Begin() const { return Iterator(m_FirstNode); }
+		Iterator End() const { return Iterator(nullptr); }
+
+		void BinSort(int range);
+		void RadixSort(int radix);
+
+	private:
+		void CheckIndex(int index) const;
+
+	protected:
+		ChainNode<T>* m_FirstNode;
+		int m_InitialCapacity;
+		int m_ListSize;
+	};
+
+	template<typename T>
+	Chain<T>::Chain()
+	{
+		m_FirstNode = nullptr;
+		m_ListSize = 0;
+	}
+
+	template<typename T>
+	Chain<T>::Chain(const Chain<T>& other)
+	{
+		m_ListSize = other.m_ListSize;
+
+		if (m_ListSize == 0)
+		{
+			m_FirstNode = nullptr;
+			return;
+		}
+
+		// 存储当前要复制的节点
+		ChainNode<T>* sourceNode = other.m_FirstNode;
+		// 复制第一个节点
+		m_FirstNode = new ChainNode<T>(sourceNode->element);
+		// 更新下一个要复制的节点
+		sourceNode = sourceNode->next;
+		// 存储当前复制出的节点
+		ChainNode<T>* targetNode = m_FirstNode;
+		//循环复制余下的节点
+		while (sourceNode)
+		{
+			ChainNode<T>* nextNode = new ChainNode<T>(sourceNode->element);
+			targetNode->next = nextNode;
+			sourceNode = sourceNode->next;
+			targetNode = targetNode->next;
+		}
+		// 链表结束
+		targetNode->next = nullptr;
+	}
+
+	template<typename T>
+	Chain<T>::~Chain()
+	{
+		while (m_FirstNode)
+		{
+			ChainNode<T>* nextNode = m_FirstNode->next;
+			delete m_FirstNode;
+			m_FirstNode = nextNode;
+		}
+	}
+
+	template<typename T>
+	T& Chain<T>::Get(int index) const
+	{
+		CheckIndex(index);
+
+		ChainNode<T>* currentNode = m_FirstNode;
+		// 循环index次到达目标节点
+		for (int i = 0; i < index; ++i)
+		{
+			currentNode = currentNode->next;
+		}
+		return currentNode->element;
+	}
+
+	template<typename T>
+	int Chain<T>::Find(const T& element) const
+	{
+		ChainNode<T>* currentNode = m_FirstNode;
+		int index = 0;
+		while (currentNode && currentNode->element != element)
+		{
+			index++;
+			currentNode = currentNode->next;
+		}
+
+		if (currentNode == nullptr)
+		{
+			return -1;
+		}
+		return index;
+	}
+
+	template<typename T>
+	void Chain<T>::Insert(int index, const T& element)
+	{
+		if (index < 0 || index > m_ListSize)
+		{
+			std::ostringstream ss;
+			ss << "Index (= " << index << ") must be inside the range [0, " << Size() << "]!";
+			throw std::invalid_argument(ss.str());
+		}
+
+		if (index == 0)
+		{
+			// 在链表头插入
+			m_FirstNode = new ChainNode<T>(element, m_FirstNode);
+		}
+		else
+		{
+			ChainNode<T>* currentNode = m_FirstNode;
+			// 寻找新节点的前驱
+			for (int i = 0; i < index - 1; ++i)
+			{
+				currentNode = currentNode->next;
+			}
+			// 在currentNode之后插入
+			currentNode->next = new ChainNode<T>(element, currentNode->next);
+		}
+		m_ListSize++;
+	}
+
+	template<typename T>
+	void Chain<T>::Erase(int index)
+	{
+		CheckIndex(index);
+
+		ChainNode<T>* deleteNode;
+		if (index == 0)
+		{
+			deleteNode = m_FirstNode;
+			m_FirstNode = m_FirstNode->next;
+		}
+		else
+		{
+			ChainNode<T>* currentNode = m_FirstNode;
+			// 寻找要删除节点的前驱
+			for (int i = 0; i < index - 1; ++i)
+			{
+				currentNode = currentNode->next;
+			}
+			deleteNode = currentNode->next;
+			currentNode->next = currentNode->next->next;
+		}
+		delete deleteNode;
+		m_ListSize--;
+	}
+
+	template<typename T>
+	void Chain<T>::Output(std::ostream& out) const
+	{
+		for (ChainNode<T>* currentNode = m_FirstNode; currentNode != nullptr; currentNode = currentNode->next)
+		{
+			out << currentNode->element << " ";
+		}
+	}
+
+	/** 通过跟踪每一个箱子的首尾节点， 就可以在“子收集阶段”把箱子链接起来 */
+	template<typename T>
+	void Chain<T>::BinSort(int range)
+	{
+		ChainNode<T>** bottom, **top;
+		bottom = new ChainNode<T>* [range + 1];
+		top = new ChainNode<T>* [range + 1];
+		for (int i = 0; i <= range; ++i)
+		{
+			bottom[i] = nullptr;
+		}
+
+		// 链表的节点分配给箱子
+		for (; m_FirstNode != nullptr; m_FirstNode = m_FirstNode->next)
+		{
+			// 元素类型转换微int
+			int bin = m_FirstNode->element;
+			// 箱子为空
+			if (bottom[bin] == nullptr)
+			{
+				bottom[bin] = top[bin] = m_FirstNode;
+			}
+			// 箱子不空
+			else
+			{
+				top[bin]->next = m_FirstNode;
+				top[bin] = m_FirstNode;
+			}
+		}
+
+		// 用于连接各个箱子的节点
+		ChainNode<T>* startNode = nullptr;
+		// 把箱子中的节点收集到有序链表
+		for (int bin = 0; bin <= range; ++bin)
+		{
+			// 箱子不空
+			if (bottom[bin] != nullptr)
+			{
+				// 第一个非空箱子
+				if (startNode == nullptr)
+				{
+					m_FirstNode = bottom[bin];
+				}
+				// 不是第一个非空箱子
+				else
+				{
+					startNode->next = bottom[bin];
+				}
+				startNode = top[bin];
+			}
+		}
+		// 链表结束
+		if (startNode)
+		{
+			startNode->next = nullptr;
+		}
+
+		delete[] bottom;
+		delete[] top;
+	}
+
+	template<typename T>
+	void Chain<T>::RadixSort(int radix)
+	{
+		// TODO
+	}
+
+	template<typename T>
+	void Chain<T>::CheckIndex(int index) const
+	{
+		if (!IsValidIndex(index))
+		{
+			std::ostringstream ss;
+			ss << "Index (= " << index << ") must be inside the range [0, " << m_ListSize << ")!";
+			throw std::invalid_argument(ss.str());
+		}
+	}
+
+	template <typename T>
+	std::ostream& operator<<(std::ostream& out, const Chain<T>& x)
+	{
+		x.Output(out);
+		return out;
+	}
+
+	template<typename T>
+	class ExtendedChain : public Chain<T>
+	{
+	public:
+		ExtendedChain();
+		ExtendedChain(const ExtendedChain<T>& other);
+		~ExtendedChain();
+
+		virtual void Insert(int index, const T& element) override;
+		virtual void Erase(int index) override;
+
+		virtual void Clear();
+		virtual void PushBack(const T& element);
+
+	private:
+		/** 用于快速在末尾插入 */
+		ChainNode<T>* m_LastNode;
+	};
+
+	template<typename T>
+	ExtendedChain<T>::ExtendedChain()
+		: Chain()
+	{
+		m_LastNode = nullptr;
+	}
+
+	template<typename T>
+	ExtendedChain<T>::ExtendedChain(const ExtendedChain<T>& other)
+	{
+		this->m_ListSize = other.m_ListSize;
+
+		if (this->m_ListSize == 0)
+		{
+			this->m_FirstNode = nullptr;
+			m_LastNode = nullptr;
+			return;
+		}
+
+		// 存储当前要复制的节点
+		ChainNode<T>* sourceNode = other.m_FirstNode;
+		// 复制第一个节点
+		this->m_FirstNode = new ChainNode<T>(sourceNode->element);
+		// 更新下一个要复制的节点
+		sourceNode = sourceNode->next;
+		// 存储当前复制出的节点
+		ChainNode<T>* targetNode = this->m_FirstNode;
+		//循环复制余下的节点
+		while (sourceNode)
+		{
+			ChainNode<T>* nextNode = new ChainNode<T>(sourceNode->element);
+			targetNode->next = nextNode;
+			sourceNode = sourceNode->next;
+			targetNode = targetNode->next;
+		}
+		// 链表结束
+		targetNode->next = nullptr;
+		m_LastNode = targetNode;
+	}
+
+	template<typename T>
+	ExtendedChain<T>::~ExtendedChain()
+	{
+		while (this->m_FirstNode)
+		{
+			ChainNode<T>* nextNode = this->m_FirstNode->next;
+			delete this->m_FirstNode;
+			this->m_FirstNode = nextNode;
+		}
+	}
+
+	template<typename T>
+	void ExtendedChain<T>::Insert(int index, const T& element)
+	{
+		if (index < 0 || index > this->m_ListSize)
+		{
+			std::ostringstream ss;
+			ss << "Index (= " << index << ") must be inside the range [0, " << this->Size() << "]!";
+			throw std::invalid_argument(ss.str());
+		}
+
+		if (index == 0)
+		{
+			// 在链表头插入
+			this->m_FirstNode = new ChainNode<T>(element, this->m_FirstNode);
+		}
+		else
+		{
+			ChainNode<T>* currentNode = this->m_FirstNode;
+			// 寻找新节点的前驱
+			for (int i = 0; i < index - 1; ++i)
+			{
+				currentNode = currentNode->next;
+			}
+			// 在currentNode之后插入
+			currentNode->next = new ChainNode<T>(element, currentNode->next);
+			if (currentNode->next->next == nullptr)
+			{
+				m_LastNode = currentNode->next;
+			}
+		}
+		this->m_ListSize++;
+	}
+
+	template<typename T>
+	void ExtendedChain<T>::Erase(int index)
+	{
+		this->CheckIndex(index);
+
+		ChainNode<T>* deleteNode;
+		if (index == 0)
+		{
+			deleteNode = this->m_FirstNode;
+			this->m_FirstNode = this->m_FirstNode->next;
+		}
+		else
+		{
+			ChainNode<T>* currentNode = this->m_FirstNode;
+			// 寻找要删除节点的前驱
+			for (int i = 0; i < index - 1; ++i)
+			{
+				currentNode = currentNode->next;
+			}
+			deleteNode = currentNode->next;
+			currentNode->next = currentNode->next->next;
+			if (currentNode->next == nullptr)
+			{
+				m_LastNode = currentNode;
+			}
+		}
+		delete deleteNode;
+		this->m_ListSize--;
+	}
+
+	template<typename T>
+	void ExtendedChain<T>::Clear()
+	{
+		while (this->m_FirstNode)
+		{
+			ChainNode<T>* nextNode = this->m_FirstNode->next;
+			delete this->m_FirstNode;
+			this->m_FirstNode = nextNode;
+		}
+		this->m_ListSize = 0;
+	}
+
+	template<typename T>
+	void ExtendedChain<T>::PushBack(const T& element)
+	{
+		ChainNode<T>* newNode = new ChainNode<T>(element);
+		if (this->m_ListSize == 0)
+		{
+			this->m_FirstNode = this->m_LastNode = newNode;
+		}
+		else
+		{
+			this->m_LastNode->next = newNode;
+			this->m_LastNode = newNode;
+		}
+		this->m_ListSize++;
 	}
 
 }
