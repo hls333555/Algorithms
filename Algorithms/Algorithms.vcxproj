@@ -140,6 +140,7 @@
     <ClInclude Include="src\Algorithms.h" />
     <ClInclude Include="src\LinearList.h" />
     <ClInclude Include="src\Matrix.h" />
+    <ClInclude Include="src\Stack.h" />
     <ClInclude Include="src\Test.h" />
     <ClInclude Include="src\Timer.h" />
   </ItemGroup>

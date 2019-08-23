@@ -177,17 +177,17 @@ namespace HAlgorithm {
 		// 手动调用析构函数
 		m_Element[--m_ListSize].~T();
 
-		// 缩小容量
-		if (m_ListSize < m_ArraySize / 4)
-		{
-			int newSize = std::max(m_InitialCapacity, m_ArraySize / 2);
-			T* temp = new T[newSize];
-			std::copy(m_Element, m_Element + newSize, temp);
-			// 删除旧数组
-			delete[] m_Element;
-			m_Element = temp;
-			m_ArraySize = newSize;
-		}
+		// 缩小容量 - 该部分可能导致初始分配大空间(>>10)的反而比分配默认空间(10)的运行更慢
+		//if (m_ListSize < m_ArraySize / 4)
+		//{
+		//	int newSize = std::max(m_InitialCapacity, m_ArraySize / 2);
+		//	T* temp = new T[newSize];
+		//	std::copy(m_Element, m_Element + newSize, temp);
+		//	// 删除旧数组
+		//	delete[] m_Element;
+		//	m_Element = temp;
+		//	m_ArraySize = newSize;
+		//}
 	}
 
 	template<typename T>
@@ -374,9 +374,11 @@ namespace HAlgorithm {
 		};
 
 	public:
-		Chain();
+		Chain()
+			: m_FirstNode(nullptr)
+			, m_ListSize(0) {}
 		Chain(const Chain<T>& other);
-		~Chain();
+		virtual ~Chain();
 
 		virtual bool Empty() const override { return m_ListSize == 0; }
 		virtual int Size() const override { return m_ListSize; }
@@ -402,13 +404,6 @@ namespace HAlgorithm {
 		int m_InitialCapacity;
 		int m_ListSize;
 	};
-
-	template<typename T>
-	Chain<T>::Chain()
-	{
-		m_FirstNode = nullptr;
-		m_ListSize = 0;
-	}
 
 	template<typename T>
 	Chain<T>::Chain(const Chain<T>& other)

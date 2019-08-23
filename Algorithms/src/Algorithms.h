@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <iterator>
 
+#include "Stack.h"
+
 namespace HAlgorithm {
 
 	/** 交换两元素 */
@@ -269,4 +271,192 @@ namespace HAlgorithm {
 		return -1;
 	}
 
+	bool CheckMatchedPairs(const std::string& str, char c1 = '{', char c2 = '}')
+	{
+		bool bResult = true;
+		ArrayStack<int> stack;
+		for (int i = 0; i < str.size(); ++i)
+		{
+			if (str[i] == c1)
+			{
+				stack.Push(i);
+			}
+			else
+			{
+				if (str[i] == c2)
+				{
+					try
+					{
+						stack.Pop();
+					}
+					catch (std::exception e)
+					{
+						std::cout << "No match for " << c2 << " at " << i << std::endl;
+						bResult = false;
+					}
+				}
+			}
+		}
+
+		while (!stack.Empty())
+		{
+			std::cout << "No match for " << c1 << " at " << stack.Top() << std::endl;
+			bResult = false;
+			stack.Pop();
+		}
+
+		if (bResult)
+		{
+			std::cout << "No issues found!" << std::endl;
+		}
+		return bResult;
+	}
+
+	/** 汉诺塔问题-将n个碟子从1塔移动到3塔 */
+	void TowersOfHanoi(int n, int x = 1, int y = 2, int z = 3)
+	{
+		if (n > 0)
+		{
+			// 将n-1个碟子递归地从1塔经3塔中转移动到2塔
+			TowersOfHanoi(n - 1, x, z, y);
+			// 将1塔的1个碟子移动到3塔
+			std::cout << x << "->" << z << std::endl;
+			// 将n-1个碟子递归地从2塔经1塔中转移动到3塔
+			TowersOfHanoi(n - 1, y, x, z);
+		}
+	}
+
+	namespace HMaze {
+
+		struct Position
+		{
+			int row, column;
+		};
+
+		std::ostream& operator<<(std::ostream& out, const Position& x)
+		{
+			out << "(" << x.row << ", " << x.column << ")";
+			return out;
+		}
+
+		enum Direction
+		{
+			right = 0, down, left, up
+		};
+
+		bool SolveMaze(bool mazeData[][10], int size)
+		{
+			Position offset[4];
+			// 向右
+			offset[right].row = 0; offset[right].column = 1;
+			// 向下
+			offset[down].row = 1; offset[down].column = 0;
+			// 向左
+			offset[left].row = 0; offset[left].column = -1;
+			// 向上
+			offset[up].row = -1; offset[up].column = 0;
+
+			// 为包括外围障碍墙的新迷宫分配空间
+			bool** maze = new bool* [size + 2];
+			for (int i = 0; i < size + 2; ++i)
+			{
+				maze[i] = new bool[size + 2];
+			}
+
+			// 复制迷宫数据
+			for (int i = 1; i <= size; ++i)
+			{
+				for (int j = 1; j <= size; ++j)
+				{
+					maze[i][j] = mazeData[i - 1][j - 1];
+				}
+			}
+			// 初始化迷宫外围的障碍墙
+			for (int i = 0; i <= size + 1; ++i)
+			{
+				// 顶部
+				maze[0][i] = 1;
+				// 底部
+				maze[size + 1][i] = 1;
+				// 左部
+				maze[i][0] = 1;
+				// 右部
+				maze[i][size + 1] = 1;
+			}
+
+			Position currentPos{ 1,1 };
+			maze[1][1] = 1; // 建一堵墙，防止回到出口
+			int currentDir = right;
+			ArrayStack<Position> stackPath;
+
+			// 没有到达出口
+			while (currentPos.row != size || currentPos.column != size)
+			{
+				int nextRow, nextColumn;
+				// 顺时针方向搜索可以移动的方向
+				while (currentDir <= up)
+				{
+					nextRow = currentPos.row + offset[currentDir].row;
+					nextColumn = currentPos.column + offset[currentDir].column;
+					// 找到可以移动的方向
+					if (!maze[nextRow][nextColumn])
+						break;
+					currentDir++;
+				}
+				// 下一个移动位置已经找到
+				if (currentDir <= up)
+				{
+					// 记录移动路径
+					stackPath.Push(currentPos);
+					// 移动到下一个位置
+					currentPos.row = nextRow;
+					currentPos.column = nextColumn;
+					// 防止回到刚才的位置
+					maze[currentPos.row][currentPos.column] = 1;
+					// 重置搜索方向
+					currentDir = right;
+				}
+				// 没有相邻的位置可移动，返回
+				else
+				{
+					// 无路可退
+					if (stackPath.Empty())
+					{
+						std::cout << "No path exist!" << std::endl;
+						return false;
+					}
+					Position lastPos = stackPath.Top();
+					stackPath.Pop();
+					// 判断退回后再进行搜索的方向
+					if (currentPos.row == lastPos.row)
+					{
+						// 若上一步是向右移动，则回退后向下搜索
+						// 若上一步是向左移动，则回退后向上搜索
+						currentDir = 2 + lastPos.column - currentPos.column;
+					}
+					else
+					{
+						// 若上一步是向下移动，则回退后向左搜索
+						// 若上一步是向上移动，则回退后无方向可移动，需继续回退
+						currentDir = 3 + lastPos.row - currentPos.row;
+					}
+					// 退回上一个记录的位置
+					currentPos = lastPos;
+				}
+			}
+			// 打印路径
+			stackPath.Output(std::cout, "->");
+			// 打印终点
+			std::cout << "(" << currentPos.row << ", " << currentPos.column << ")" << std::endl;
+
+			for (int i = 0; i < size + 2; ++i)
+			{
+				delete[] maze[i];
+			}
+			delete[] maze;
+			return true;
+		}
+	}
+
+	
 }
