@@ -2,6 +2,7 @@
 #include "LinearList.h"
 #include "Matrix.h"
 #include "Stack.h"
+#include "Queue.h"
 
 #include "Test.h"
 
@@ -19,16 +20,14 @@ int main()
 	int a[] = { 2,4,6,8,9 };
 	char b[] = { 'e','b','d','f','c','a','g' };
 
-	//try
-	//{
-	//	StackTest();
-	//}
-	//catch (std::exception e)
-	//{
-	//	std::cout << e.what() << std::endl;
-	//}
+	try
+	{
 
-	MazeTest();
+	}
+	catch (std::exception e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 
 	return 0;
 }
