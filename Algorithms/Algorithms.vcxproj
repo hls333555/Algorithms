@@ -138,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Algorithms.h" />
+    <ClInclude Include="src\Dictionary.h" />
     <ClInclude Include="src\LinearList.h" />
     <ClInclude Include="src\Matrix.h" />
     <ClInclude Include="src\Queue.h" />
