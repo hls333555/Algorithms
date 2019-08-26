@@ -255,7 +255,7 @@ namespace HAlgorithm {
 		if (m_Table[i])
 		{
 			// 找到匹配的键值对，删除
-			if (m_Table[i]->first == pair.first)
+			if (m_Table[i]->first == key)
 			{
 				delete m_Table[i];
 				return;
@@ -315,7 +315,7 @@ namespace HAlgorithm {
 	template<typename T1, typename T2>
 	void HashChain<T1, T2>::Erase(const T1& key)
 	{
-		int i = std::hash<T1>(pair.first) % m_Divisor;
+		int i = std::hash<T1>(key) % m_Divisor;
 		int lastSize = m_Table[i].Size();
 		m_Table[i].Erase(key);
 		if (m_Table[i].Size() < lastSize)
