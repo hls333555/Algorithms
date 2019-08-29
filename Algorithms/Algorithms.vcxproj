@@ -142,6 +142,7 @@
     <ClInclude Include="src\Dictionary.h" />
     <ClInclude Include="src\LinearList.h" />
     <ClInclude Include="src\Matrix.h" />
+    <ClInclude Include="src\PriorityQueue.h" />
     <ClInclude Include="src\Queue.h" />
     <ClInclude Include="src\Stack.h" />
     <ClInclude Include="src\Test.h" />

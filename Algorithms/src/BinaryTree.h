@@ -15,7 +15,7 @@ namespace HAlgorithm {
 			: element(_element)
 			, leftChild(nullptr), rightChild(nullptr) {}
 		BinaryTreeNode(const T& _element, BinaryTreeNode<T>* _leftChild, BinaryTreeNode<T>* _rightChild)
-			: _element(_element)
+			: element(_element)
 			, leftChild(_leftChild)
 			, rightChild(_rightChild) {}
 
@@ -44,16 +44,20 @@ namespace HAlgorithm {
 		LinkedBinaryTree()
 			: m_Root(nullptr)
 			, m_TreeSize(0) {}
+		LinkedBinaryTree(const T& element, LinkedBinaryTree<T>& leftChildTree, LinkedBinaryTree<T>& rightChildTree);
 		virtual ~LinkedBinaryTree() { Erase(); }
+
+		BinaryTreeNode<T>* Root() const { return m_Root; }
 
 		virtual bool Empty() const override { return m_TreeSize == 0; }
 		virtual int Size() const override { return m_TreeSize; }
-		virtual void PreOrder(void(*visit)(BinaryTreeNode<T>*) = Output) override { InternalPreOrder(visit, m_Root); }
-		virtual void InOrder(void(*visit)(BinaryTreeNode<T>*) = Output) override { InternalInOrder(visit, m_Root); }
-		virtual void PostOrder(void(*visit)(BinaryTreeNode<T>*) = Output) override { InternalPostOrder(visit, m_Root); }
-		virtual void LevelOrder(void(*visit)(BinaryTreeNode<T>*) = Output) override { InternalLevelOrder(visit, m_Root); }
+		virtual void PreOrder(void(*visit)(BinaryTreeNode<T>*) = &Output) override { InternalPreOrder(visit, m_Root); }
+		virtual void InOrder(void(*visit)(BinaryTreeNode<T>*) = &Output) override { InternalInOrder(visit, m_Root); }
+		virtual void PostOrder(void(*visit)(BinaryTreeNode<T>*) = &Output) override { InternalPostOrder(visit, m_Root); }
+		virtual void LevelOrder(void(*visit)(BinaryTreeNode<T>*) = &Output) override { InternalLevelOrder(visit, m_Root); }
+
 		int Height() const { HeightHelper(m_Root); }
-		/** 通过后序遍历删除所有节点。 */
+		/** 通过后序遍历删除所有节点。*/
 		void Erase();
 
 	private:
@@ -61,16 +65,30 @@ namespace HAlgorithm {
 		void InternalInOrder(void(*visit)(BinaryTreeNode<T>*), BinaryTreeNode<T>* startTreeNode);
 		void InternalPostOrder(void(*visit)(BinaryTreeNode<T>*), BinaryTreeNode<T>* startTreeNode);
 		void InternalLevelOrder(void(*visit)(BinaryTreeNode<T>*), BinaryTreeNode<T>* startTreeNode);
+
 		int InternalHeight(BinaryTreeNode<T>* startTreeNode) const;
+
+		// 赋值给函数指针的类內方法必须为static！
 		/** 删除指定节点。 */
-		void Dispose(BinaryTreeNode<T>* treeNode) { delete treeNode; }
-		void Output(BinaryTreeNode<T>* treeNode) const { std::cout << treeNode->element << "->"; }
+		static void Dispose(BinaryTreeNode<T>* treeNode) { delete treeNode; }
+		static void Output(BinaryTreeNode<T>* treeNode) { std::cout << treeNode->element << "->"; }
 
 	private:
 		BinaryTreeNode<T>* m_Root;
 		int m_TreeSize;
 
 	};
+
+	template<typename T>
+	LinkedBinaryTree<T>::LinkedBinaryTree(const T& element, LinkedBinaryTree<T>& leftChildTree, LinkedBinaryTree<T>& rightChildTree)
+	{
+		m_Root = new BinaryTreeNode<T>(element, leftChildTree.m_Root, rightChildTree.m_Root);
+		m_TreeSize = leftChildTree.m_TreeSize + rightChildTree.m_TreeSize + 1;
+
+		// 将原左右子树的所有权转移给该树
+		leftChildTree.m_Root = rightChildTree.m_Root = nullptr;
+		leftChildTree.m_TreeSize = rightChildTree.m_TreeSize = 0;
+	}
 
 	template<typename T>
 	void LinkedBinaryTree<T>::Erase()
@@ -86,8 +104,8 @@ namespace HAlgorithm {
 		if (startTreeNode)
 		{
 			visit(startTreeNode);
-			PreOrder(startTreeNode->leftChild);
-			PreOrder(startTreeNode->rightChild);
+			InternalPreOrder(visit, startTreeNode->leftChild);
+			InternalPreOrder(visit, startTreeNode->rightChild);
 		}
 	}
 
@@ -96,9 +114,9 @@ namespace HAlgorithm {
 	{
 		if (startTreeNode)
 		{
-			InOrder(startTreeNode->leftChild);
+			InternalInOrder(visit, startTreeNode->leftChild);
 			visit(startTreeNode);
-			InOrder(startTreeNode->rightChild);
+			InternalInOrder(visit, startTreeNode->rightChild);
 		}
 	}
 
@@ -107,8 +125,8 @@ namespace HAlgorithm {
 	{
 		if (startTreeNode)
 		{
-			PostOrder(startTreeNode->leftChild);
-			PostOrder(startTreeNode->rightChild);
+			InternalPostOrder(visit, startTreeNode->leftChild);
+			InternalPostOrder(visit, startTreeNode->rightChild);
 			visit(startTreeNode);
 		}
 	}

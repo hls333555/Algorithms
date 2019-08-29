@@ -383,3 +383,42 @@ void MazeTest()
 	HAlgorithm::HMaze::SolveMaze(maze3, 10);
 	HAlgorithm::HMaze::SolveMaze(maze4, 10);
 }
+
+void HuffmanCompressionTest()
+{
+	std::cout << "文本压缩工具 v0.1\n" << std::endl;
+	char compress;
+	std::cout << "压缩or解压？(y/n)" << std::endl;
+	std::cin >> compress;
+	std::cin.get();
+	
+	std::string inFilePath, outFilePath;
+	if (compress == 'y')
+	{
+		std::cout << "请输入要压缩的文件路径：" << std::endl;
+		std::getline(std::cin, inFilePath);
+		std::cout << "请输入压缩完的文件路径(内容为空则默认使用上个路径)：" << std::endl;
+		std::getline(std::cin, outFilePath);
+		if (outFilePath == "")
+		{
+			outFilePath = inFilePath;
+		}
+
+		std::cout << "开始压缩......" << std::endl;
+		HAlgorithm::HHuffmanCoding::Compress(inFilePath, outFilePath);
+	}
+	else
+	{
+		std::cout << "请输入要解压的文件路径：" << std::endl;
+		std::getline(std::cin, inFilePath);
+		std::cout << "请输入解压完的文件路径(内容为空则默认使用上个路径)：" << std::endl;
+		std::getline(std::cin, outFilePath);
+		if (outFilePath == "")
+		{
+			outFilePath = inFilePath;
+		}
+
+		std::cout << "开始解压......" << std::endl;
+		HAlgorithm::HHuffmanCoding::Decompress(inFilePath, outFilePath);
+	}
+}

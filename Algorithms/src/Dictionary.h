@@ -32,6 +32,40 @@ namespace HAlgorithm {
 	template <typename T1, typename T2>
 	class SortedChain : public Dictionary<T1, T2>
 	{
+		class Iterator
+		{
+		public:
+			typedef struct forward_iterator_tag iterator_category;
+			typedef PairNode<T1, T2> value_type;
+			typedef ptrdiff_t difference_type;
+			typedef PairNode<T1, T2>* pointer;
+			typedef PairNode<T1, T2>& reference;
+
+			Iterator(PairNode<T1, T2>* position = 0)
+				: m_Position(position) {}
+
+			PairNode<T1, T2>& operator*() const { return *m_Position; }
+			PairNode<T1, T2>* operator->() const { return &*m_Position; }
+
+			Iterator& operator++()
+			{
+				m_Position = m_Position->next;
+				return *this;
+			}
+			Iterator operator++(int)
+			{
+				Iterator temp = *this;
+				m_Position = m_Position->next;
+				return temp;
+			}
+
+			bool operator==(const Iterator& other) const { return m_Position == other.m_Position; }
+			bool operator!=(const Iterator& other) const { return m_Position != other.m_Position; }
+
+		private:
+			PairNode<T1, T2>* m_Position;
+		};
+
 	public:
 		SortedChain()
 			: m_FirstNode(nullptr)
@@ -44,6 +78,8 @@ namespace HAlgorithm {
 		virtual void Insert(const std::pair<const T1, T2>& pair) override;
 		virtual void Erase(const T1& key) override;
 		virtual void Output(std::ostream& out) const override;
+
+		Iterator Begin() { return Iterator(m_FirstNode); }
 
 	private:
 		PairNode<T1, T2>* m_FirstNode;
